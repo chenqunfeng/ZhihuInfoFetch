@@ -1,0 +1,21 @@
+{
+  "name": "ZhihuInfoFetch",
+  "version": "1.0.0",
+  "description": "This is a program in order to fetch data from zhihu.",
+  "main": "app.js",
+  "dependencies": {
+    "body-parser": "^1.15.2",
+    "express": "^4.14.0",
+    "superagent": "^3.3.1",
+    "request": "^2.79.0",
+    "cheerio": "^0.22.0"
+  },
+  "devDependencies": {
+    "jsonfile": "^2.4.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "CQF",
+  "license": "ISC"
+}
