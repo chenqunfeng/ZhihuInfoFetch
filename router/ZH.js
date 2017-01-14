@@ -11,11 +11,24 @@ log4js.addAppender(log4js.appenders.file('./logs/info.log'), 'ZHFETCH');
 var zh = new ZH(),
     logger = log4js.getLogger('ZHFETCH');
 
+var extend = function(obj, target) {
+    var k, v;
+    if (!obj && 'object' !== typeof obj) obj = {}
+    for (k in target) {
+        if (!obj[k]) {
+            obj[k] = target[k]
+        }
+    }
+    return obj;
+}
+
 router.get('/', function(req, res, next) {
 
     logger.info(getIP(req))
 
-    zh.verify(function(data) {
+    params = extend(req.body, req.query)
+
+    zh.verify(params, function(data) {
         // if ('logout' == data.status) {
         //     _xsrf = data._xsrf
         //     captcha = data.captcha
@@ -43,8 +56,8 @@ router.post('/login', function(req, res, next) {
 
     params = req.body
 
-    zh.login(params, function(_err, _res) {
-        return res.json(_res.body)
+    zh.login(params, function(data) {
+        return res.json(data)
     })
 
 })
@@ -53,7 +66,7 @@ router.post('/getList', function(req, res, next) {
 
     logger.info(getIP(req))
 
-    params = req.body
+    params = extend(req.body, req.query)
 
     zh.getList(params, function(_err, _res) {
         return res.json(_res.body)

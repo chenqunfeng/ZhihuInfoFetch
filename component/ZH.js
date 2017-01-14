@@ -2,12 +2,14 @@ var request = require('superagent'),
     cheerio = require('cheerio'),
     fs = require('fs'),
     jsonfile = require('jsonfile'),
-    cookieJar = require('./cookie.js')
+    cookieJar = require('./cookie.js'),
+    common = require('./common.js')
     ;
 
 function ZH(account) {
     this.cookieJar = new cookieJar();
     this.cookieFile = './cookie/cookie.json';
+    this.cookies = {}
     this.cookie = {
         value: null,
         expires: null,
@@ -27,18 +29,33 @@ ZH.prototype = {
 
     // 初始化
     init: function() {
-        this.getCookie();
         console.log('初始化ZH');
     },
 
     // 从文件中读取cookie并返回cookie
-    getCookie: function() {
-        if (!fs.existsSync(this.cookieFile)) {
-            fs.writeFileSync(this.cookieFile, '{}')
+    getCookie: function(id) {
+        if (!id) {
+            this.cookie = {
+                value: null,
+                expires: null,
+                _xsrf: ''
+            }
+            return false
         }
-        obj = jsonfile.readFileSync(this.cookieFile)
-        if (obj && obj.zhihu) {
-            this.cookie = obj.zhihu
+        if (common.isEmpty(this.cookies)) {
+            if (!fs.existsSync(this.cookieFile)) {
+                fs.writeFileSync(this.cookieFile, '{}')
+            }
+            this.cookies = jsonfile.readFileSync(this.cookieFile)
+        }
+        if (this.cookies && this.cookies[id]) {
+            this.cookie = this.cookies[id]
+        } else {
+            this.cookie = {
+                value: null,
+                expires: null,
+                _xsrf: ''
+            }
         }
         return this.cookie
     },
@@ -74,15 +91,19 @@ ZH.prototype = {
     // 保存cookie
     saveCookie: function(cookie) {
         if (cookie && 'object' === typeof cookie) {
+            var id = Math.round(Math.random() * 10e15).toString(36)
             obj = jsonfile.readFileSync(this.cookieFile)
-            if (!obj.zhihu) obj.zhihu = {}
-            obj.zhihu = cookie
+            if (!obj[id]) obj[id] = {}
+            obj[id] = cookie
             jsonfile.writeFileSync(this.cookieFile, obj)
+            return id
         }
+        return false
     },
 
     // 验证登录
-    verify: function(cb) {
+    verify: function(params, cb) {
+        this.getCookie(params.id);
         if (expires = this.cookie.expires) {
             expires = new Date(expires)
             if (Date.now() <= expires.valueOf()) {
@@ -131,8 +152,16 @@ ZH.prototype = {
                 this.emailLogin(params, cb)
             }
         }
-          
     },
+
+    // // 登出
+    // logout: function(params, cb) {
+    //     this.cookie = {
+    //         value: null,
+    //         expires: null,
+    //         _xsrf: null
+    //     }
+    // },
 
     // 手机登录
     phoneLogin: function(data, cb) {
@@ -162,26 +191,29 @@ ZH.prototype = {
             .end(function(err, res){
                 that.loginSuccess(err, res, cb)
             })
-
     },
 
     // 登录成功
     loginSuccess: function(err, res, cb) {
         if (err) {
             this.print('登录出错:', err)
+            cb({
+                status: 'error'
+            })
         }
         else {
             this.print('登录成功:', res.body)
-            var cookie = res.headers['set-cookie']
+            var cookie = res.headers['set-cookie'];
             this.cookieJar.setCookie(cookie)
             this.setCookie(this.cookieJar.getCookie())
-            this.saveCookie(this.cookie)
+            res.body.id = this.saveCookie(this.cookie)
+            cb(res.body)
         }
-        cb(err, res);
     },
 
     // 获取知乎内容列表
     getList: function(data, cb) {
+        this.getCookie(data.id)
         request
             .post('https://www.zhihu.com/node/TopStory2FeedList')
             .set(this.headers)
@@ -196,7 +228,6 @@ ZH.prototype = {
             .end(function(err, res) {
                 cb(err, res)
             })
-            
     },
 
     // 信息输出
