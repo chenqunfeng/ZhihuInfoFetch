@@ -68,8 +68,8 @@ router.post('/getList', function(req, res, next) {
 
     params = extend(req.body, req.query)
 
-    zh.getList(params, function(_err, _res) {
-        return res.json(_res.body)
+    zh.getList(params, function(data) {
+        return res.json(data)
     })
 
 })

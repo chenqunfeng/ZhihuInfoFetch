@@ -34,6 +34,7 @@ ZH.prototype = {
 
     // 从文件中读取cookie并返回cookie
     getCookie: function(id) {
+        console.log(id)
         if (!id) {
             this.cookie = {
                 value: null,
@@ -44,6 +45,7 @@ ZH.prototype = {
         }
         if (common.isEmpty(this.cookies)) {
             if (!fs.existsSync(this.cookieFile)) {
+                console.log('create cookieFile')
                 fs.writeFileSync(this.cookieFile, '{}')
             }
             this.cookies = jsonfile.readFileSync(this.cookieFile)
@@ -213,6 +215,7 @@ ZH.prototype = {
 
     // 获取知乎内容列表
     getList: function(data, cb) {
+        var that = this
         this.getCookie(data.id)
         request
             .post('https://www.zhihu.com/node/TopStory2FeedList')
@@ -226,8 +229,35 @@ ZH.prototype = {
             .send(data)
             .redirects(0)
             .end(function(err, res) {
-                cb(err, res)
+                var t = that.parseListMsg(res.body.msg)
+                cb(t)
             })
+    },
+
+    parseListMsg: function(data) {
+        var t = []
+        if (data instanceof Array) {
+            data.map(function(unit){
+                var o = {},
+                    $ = cheerio.load(unit)
+                    ;
+                o = {
+                    avatar: $('.avatar img').attr('src'),
+                    source: $('.feed-source a').text(),
+                    title: $('.feed-title').text(),
+                    votes: $('.zm-item-vote-count').text(),
+                    answer: {
+                        author: $('.author-link').text(),
+                        bio: $('.bio').text(),
+                        summary: $('.zh-summary').html(),
+                        content: $('.content').html()
+                    },
+                    addcomment: $('.toggle-comment').val()
+                }
+                t.push(o)
+            })
+        }
+        return t
     },
 
     // 信息输出
