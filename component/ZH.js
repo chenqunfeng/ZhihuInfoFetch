@@ -205,10 +205,12 @@ ZH.prototype = {
         }
         else {
             this.print('登录成功:', res.body)
-            var cookie = res.headers['set-cookie'];
-            this.cookieJar.setCookie(cookie)
-            this.setCookie(this.cookieJar.getCookie())
-            res.body.id = this.saveCookie(this.cookie)
+            if (0 === res.body.r) {
+                var cookie = res.headers['set-cookie'];
+                this.cookieJar.setCookie(cookie)
+                this.setCookie(this.cookieJar.getCookie())
+                res.body.id = this.saveCookie(this.cookie)
+            }
             cb(res.body)
         }
     },
