@@ -242,6 +242,7 @@ ZH.prototype = {
                 var o = {},
                     $ = cheerio.load(unit)
                     ;
+                $('.toggle-expand').remove()
                 o = {
                     avatar: $('.avatar img').attr('src'),
                     source: $('.feed-source a').text(),
