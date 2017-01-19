@@ -251,7 +251,7 @@ ZH.prototype = {
                         author: $('.author-link').text(),
                         bio: $('.bio').text(),
                         summary: $('.zh-summary').html(),
-                        content: $('.content').html()
+                        content: $('.content').val()
                     },
                     addcomment: $('.toggle-comment').val()
                 }
