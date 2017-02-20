@@ -74,5 +74,17 @@ router.post('/getList', function(req, res, next) {
 
 })
 
+router.post('/getComment', function(req, res, next) {
+
+    logger.info(getIP(req))
+
+    params = extend(req.body, req.query)
+
+    zh.getComment(params, function(data) {
+        return res.json(data)
+    })
+
+})
+
 
 module.exports = router

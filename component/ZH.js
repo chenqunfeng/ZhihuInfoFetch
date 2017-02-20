@@ -237,6 +237,43 @@ ZH.prototype = {
             })
     },
 
+    // 获取知乎题目评论
+    getComment: function(data, cb) {
+        var that = this,
+            cookieId = data.id,
+            answerId = data.answerId,
+            postId = data.postId,
+            page = data.page,
+            url
+            ;
+        this.getCookie(cookieId)
+        if (answerId || postId) {
+            if (answerId) {
+                url = 'https://www.zhihu.com/r/answers/' + answerId + '/comments'
+            } else {
+                url = 'https://www.zhihu.com/r/posts/' + postId + '/comments'
+            }
+        }
+        if (page) {
+            url += '?page=' + page
+        }
+        request
+            .get(url)
+            .set(this.headers)
+            .set('Accept', '*/*')
+            .set('Accept-Encoding', 'gzip, deflate, br')
+            .set('Accept-Language', 'zh-CN,zh;q=0.8')
+            .set('Host', 'www.zhihu.com')
+            .set('X-Requested-With', 'XMLHttpRequest')
+            .set('X-Xsrftoken', this.cookie._xsrf)
+            .set('Cookie', this.cookie.value)
+            .send(data)
+            .redirects(0)
+            .end(function(err, res) {
+                cb(res.body)
+            })
+    },
+
     parseListMsg: function(data) {
         var t = []
         if (data instanceof Array) {
@@ -246,18 +283,22 @@ ZH.prototype = {
                     ;
                 $('.toggle-expand').remove()
                 o = {
+                    // id: $('.question_link').attr('href').split('/')[2],
                     avatar: $('.avatar img').attr('src'),
                     source: $('.feed-source a').text(),
-                    title: $('.feed-title').text(),
+                    title: $('.feed-title').text() || $('.question_link').text(),
                     votes: $('.zm-item-vote-count').text(),
                     answer: {
+                        postId: $('meta[itemprop="post-id"]').attr('content'),
+                        answerId: $('meta[itemprop="answer-id"]').attr('content'),
                         author: $('.author-link').text(),
                         bio: $('.bio').text(),
                         summary: $('.zh-summary').html(),
                         content: $('.content').val()
                     },
-                    addcomment: $('.toggle-comment').val()
+                    addcomment: $('.toggle-comment').text().trim().match(/[0-9]*/)[0]
                 }
+                // console.log($('.toggle-comment').text())
                 t.push(o)
             })
         }
