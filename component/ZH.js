@@ -34,7 +34,6 @@ ZH.prototype = {
 
     // 从文件中读取cookie并返回cookie
     getCookie: function(id) {
-        console.log(id)
         if (!id) {
             this.cookie = {
                 value: null,
@@ -97,6 +96,7 @@ ZH.prototype = {
             obj = jsonfile.readFileSync(this.cookieFile)
             if (!obj[id]) obj[id] = {}
             obj[id] = cookie
+            this.cookies[id] = cookie
             jsonfile.writeFileSync(this.cookieFile, obj)
             return id
         }
@@ -204,12 +204,14 @@ ZH.prototype = {
             })
         }
         else {
-            this.print('登录成功:', res.body)
             if (0 === res.body.r) {
+                this.print('登录成功:', res.body)
                 var cookie = res.headers['set-cookie'];
                 this.cookieJar.setCookie(cookie)
                 this.setCookie(this.cookieJar.getCookie())
                 res.body.id = this.saveCookie(this.cookie)
+            } else {
+                this.print('登录出错:', res.body)
             }
             cb(res.body)
         }
